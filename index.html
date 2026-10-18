@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b42318">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Crash Cart">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Crash Cart Calculator</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --ink:#14171c; --muted:#5b6472; --line:#dde1e7;
+  --red:#b42318; --red-soft:#fdecea; --amber:#9a5b00; --amber-soft:#fff4e0;
+  --blue:#1d4ed8; --blue-soft:#e8efff; --green:#146c43; --green-soft:#e6f4ec;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1115; --card:#181b21; --ink:#eef0f3; --muted:#9aa3b0; --line:#2a2f38;
+    --red:#ff6b5e; --red-soft:#3a1714; --amber:#f2b84b; --amber-soft:#33270f;
+    --blue:#8ab0ff; --blue-soft:#17223b; --green:#5fd39a; --green-soft:#0f2a1d;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115; --card:#181b21; --ink:#eef0f3; --muted:#9aa3b0; --line:#2a2f38;
+  --red:#ff6b5e; --red-soft:#3a1714; --amber:#f2b84b; --amber-soft:#33270f;
+  --blue:#8ab0ff; --blue-soft:#17223b; --green:#5fd39a; --green-soft:#0f2a1d;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
+header.top{position:sticky;top:0;padding-top:max(12px,env(safe-area-inset-top));z-index:10;background:var(--bg);padding:12px 0 10px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--red);color:#fff;display:grid;place-items:center;font-weight:800;font-size:20px;flex:none}
+.brand h1{font-size:18px;margin:0;line-height:1.1}
+.brand small{display:block;color:var(--muted);font-size:12px;font-weight:500}
+.brand .theme{margin-left:auto;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+.patient{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:stretch}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{border:0;background:transparent;padding:10px 14px;border-radius:9px;font-weight:700;cursor:pointer;min-height:44px}
+.seg button[aria-pressed="true"]{background:var(--red);color:#fff}
+.wt{display:flex;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.wt input{flex:1;min-width:0;border:0;background:transparent;padding:10px 12px;font-size:20px;font-weight:700;outline:none}
+.wt input::placeholder{font-weight:500;font-size:16px;color:var(--muted)}
+.wt select{border:0;border-left:1px solid var(--line);background:transparent;padding:0 10px;font-weight:600}
+.wtnote{font-size:13px;color:var(--muted);margin-top:6px;min-height:18px}
+.wtnote b{color:var(--ink)}
+.tabs{display:flex;gap:6px;margin-top:10px}
+.tabs button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 6px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
+.tabs button[aria-selected="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.search{margin:14px 0 8px;position:relative}
+.search input{width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px;font-size:16px;outline:none}
+.search input:focus,.wt:focus-within{border-color:var(--blue)}
+.banner{border-radius:12px;padding:10px 12px;font-size:14px;margin:12px 0}
+.banner.warn{background:var(--amber-soft);color:var(--amber)}
+.banner.info{background:var(--blue-soft);color:var(--blue)}
+.drug{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 0;box-shadow:var(--shadow);overflow:hidden}
+.drug>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.drug>summary::-webkit-details-marker{display:none}
+.drug>summary h2{font-size:17px;margin:0}
+.drug>summary .cls{color:var(--muted);font-size:13px}
+.drug>summary .chev{margin-left:auto;color:var(--muted);transition:transform .15s}
+.drug[open]>summary .chev{transform:rotate(90deg)}
+.drug .body{padding:0 16px 14px}
+.conc{font-size:13px;color:var(--muted);margin:0 0 8px}
+.ind{border-top:1px solid var(--line);padding:12px 0 4px}
+.ind h3{margin:0 0 6px;font-size:14px;font-weight:700}
+.ind h3 .route{font-weight:600;color:var(--muted)}
+.result{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.big{font-size:26px;font-weight:800;letter-spacing:-.01em}
+.vol{font-size:18px;font-weight:700;color:var(--blue);background:var(--blue-soft);padding:2px 10px;border-radius:8px}
+.need{color:var(--muted);font-style:italic}
+.math{font-size:13px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;margin:6px 6px 0 0}
+.tag.cap{background:var(--red-soft);color:var(--red)}
+.tag.rep{background:var(--green-soft);color:var(--green)}
+.note{font-size:14px;margin-top:6px}
+.note.alert{color:var(--red);font-weight:600}
+.inforow{font-size:14px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.inforow p{margin:4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+.card h2{font-size:17px;margin:0 0 10px}
+.joules{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.jbox{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.jbox .lbl{font-size:13px;color:var(--muted);font-weight:600}
+.jbox .big{font-size:24px}
+label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+.field{width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:11px 12px;font-size:17px;outline:none;min-height:46px}
+.field:focus{border-color:var(--blue)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.out{margin-top:14px;padding:14px;border-radius:12px;background:var(--blue-soft)}
+.out .big{color:var(--blue)}
+.dir{display:flex;gap:6px;margin-bottom:6px}
+.dir button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px;font-weight:700;font-size:14px;cursor:pointer}
+.dir button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+footer{color:var(--muted);font-size:12px;margin-top:24px;line-height:1.5}
+.hidden{display:none!important}
+@media (max-width:420px){
+  .patient{grid-template-columns:1fr}
+  .seg button{flex:1}
+  .big{font-size:23px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">+</div>
+      <div><h1>Crash Cart Calculator</h1><small>Works offline · ACLS / PALS reference</small></div>
+      <button class="theme" id="themeBtn" type="button" aria-label="Switch light or dark mode">◐</button>
+    </div>
+    <div class="patient">
+      <div class="seg" role="group" aria-label="Patient type">
+        <button type="button" id="btnAdult" aria-pressed="true">Adult</button>
+        <button type="button" id="btnPeds" aria-pressed="false">Pediatric</button>
+      </div>
+      <div class="wt">
+        <input id="weight" type="number" inputmode="decimal" min="0" step="0.1" placeholder="Weight" aria-label="Patient weight">
+        <select id="unit" aria-label="Weight unit"><option value="kg">kg</option><option value="lb">lb</option></select>
+      </div>
+    </div>
+    <div class="wtnote" id="wtnote"></div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="drugs" aria-selected="true">Drugs</button>
+      <button type="button" role="tab" data-tab="shock" aria-selected="false">Shocks</button>
+      <button type="button" role="tab" data-tab="drip" aria-selected="false">Drip calc</button>
+    </div>
+  </header>
+
+  <!-- DRUGS -->
+  <section id="tab-drugs">
+    <div class="search"><input id="q" type="search" placeholder="Search medication or indication…" autocomplete="off"></div>
+    <div id="pedsWarn" class="banner warn hidden">Enter the child's weight to see doses. Use a length-based tape when weight is unknown.</div>
+    <div id="drugList"></div>
+    <noscript><div class="banner warn" dir="rtl" style="font-size:16px;line-height:1.7">
+      <b>الأدوية لا تظهر لأن الملف مفتوح في وضع المعاينة.</b><br>
+      افتح الملف في متصفح: على الآيفون اضغط مشاركة ← افتح في Safari أو Chrome. على الأندرويد افتحه بـ Chrome. على الكمبيوتر اضغط عليه مرتين ليفتح في المتصفح.<br>
+      <span dir="ltr">The medications need a browser to run. Open this file in Chrome, Safari or Edge, not in a file preview.</span>
+    </div></noscript>
+  </section>
+
+  <!-- SHOCKS -->
+  <section id="tab-shock" class="hidden">
+    <div id="shockOut"></div>
+  </section>
+
+  <!-- DRIP -->
+  <section id="tab-drip" class="hidden">
+    <div class="card">
+      <h2>Infusion calculator</h2>
+      <div class="dir" role="group" aria-label="Direction">
+        <button type="button" id="dirFwd" aria-pressed="true">Dose → mL/hr</button>
+        <button type="button" id="dirRev" aria-pressed="false">mL/hr → Dose</button>
+      </div>
+      <label class="f" for="dPreset">Drug preset</label>
+      <select class="field" id="dPreset"></select>
+      <div class="grid2">
+        <div><label class="f" for="dMg">Drug in bag (mg)</label><input class="field" id="dMg" type="number" inputmode="decimal" step="any"></div>
+        <div><label class="f" for="dMl">Bag volume (mL)</label><input class="field" id="dMl" type="number" inputmode="decimal" step="any"></div>
+      </div>
+      <div class="grid2">
+        <div id="doseWrap"><label class="f" for="dDose">Ordered dose</label><input class="field" id="dDose" type="number" inputmode="decimal" step="any"></div>
+        <div id="rateWrap" class="hidden"><label class="f" for="dRate">Pump rate (mL/hr)</label><input class="field" id="dRate" type="number" inputmode="decimal" step="any"></div>
+        <div><label class="f" for="dUnit">Dose unit</label>
+          <select class="field" id="dUnit">
+            <option value="mcgkgmin">mcg/kg/min</option>
+            <option value="mcgmin">mcg/min</option>
+            <option value="mgmin">mg/min</option>
+            <option value="mghr">mg/hr</option>
+            <option value="mgkghr">mg/kg/hr</option>
+            <option value="unitsmin">units/min</option>
+          </select>
+        </div>
+      </div>
+      <div class="out" id="dripOut"></div>
+      <p class="note" id="dripRange" style="color:var(--muted)"></p>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Clinical decision aid only.</b> It does not replace clinical judgment, a physician's order or your hospital's protocol. Always double-check the drug, concentration, dose and volume with a second nurse before giving it.</p>
+    <p>Doses follow standard AHA ACLS/PALS guidance using common crash-cart concentrations. Check that the concentrations shown match the vials on <i>your</i> cart. Content last reviewed: <span id="rev"></span>.</p>
+  </footer>
+</div>
+
+<script>
+/* =====================================================================
+   DRUG DATA — edit here to match your hospital's crash cart.
+   conc: concentration in the same unit as the dose per mL (mg/mL, g/mL, mEq/mL)
+   fixed: adult fixed dose (number or [low, high])
+   perKg: weight-based dose per kg (number or [low, high]); max = single-dose cap
+   ===================================================================== */
+const REVIEWED = "October 2026";
+
+const DRUGS = [
+ { name:"Epinephrine", cls:"Vasopressor / catecholamine",
+   conc:"0.1 mg/mL (1:10,000) prefilled syringe · 1 mg/mL (1:1,000) vial",
+   adult:[
+     {ind:"Cardiac arrest (all rhythms)", route:"IV/IO push", fixed:1, unit:"mg", c:0.1, cl:"0.1 mg/mL", rep:"Every 3–5 min", note:"Flush with 20 mL NS and raise the arm."},
+     {ind:"Anaphylaxis", route:"IM (anterolateral thigh)", fixed:0.5, unit:"mg", c:1, cl:"1 mg/mL", rep:"Repeat every 5–15 min as needed", note:"Use the 1 mg/mL vial for IM. Never give 1 mg/mL IV push."},
+     {inf:true, ind:"Bradycardia infusion", lo:2, hi:10, du:"mcgmin", preset:"epi"},
+     {inf:true, ind:"Post-ROSC hypotension infusion", lo:0.1, hi:0.5, du:"mcgkgmin", preset:"epi"}
+   ],
+   peds:[
+     {ind:"Cardiac arrest", route:"IV/IO push", perKg:0.01, max:1, unit:"mg", c:0.1, cl:"0.1 mg/mL", rep:"Every 3–5 min", note:"= 0.1 mL/kg of 0.1 mg/mL."},
+     {ind:"Cardiac arrest — ET tube (no IV/IO)", route:"ET", perKg:0.1, max:2.5, unit:"mg", c:1, cl:"1 mg/mL", rep:"Every 3–5 min", note:"= 0.1 mL/kg of 1 mg/mL. Follow with 5 mL NS and ventilations."},
+     {ind:"Anaphylaxis", route:"IM", perKg:0.01, max:0.3, unit:"mg", c:1, cl:"1 mg/mL", rep:"Repeat every 5–15 min as needed", note:"Use the 1 mg/mL vial for IM."},
+     {inf:true, ind:"Infusion (shock / post-ROSC)", lo:0.1, hi:1, du:"mcgkgmin", preset:"epi"}
+   ],
+   info:["Indications: cardiac arrest, anaphylaxis, symptomatic bradycardia, shock.","Watch for: tachyarrhythmia, hypertension, tissue necrosis with extravasation."]
+ },
+ { name:"Amiodarone", cls:"Antiarrhythmic",
+   conc:"50 mg/mL (150 mg/3 mL vial)",
+   adult:[
+     {ind:"VF / pulseless VT — 1st dose", route:"IV/IO push", fixed:300, unit:"mg", c:50, cl:"50 mg/mL"},
+     {ind:"VF / pulseless VT — 2nd dose", route:"IV/IO push", fixed:150, unit:"mg", c:50, cl:"50 mg/mL"},
+     {ind:"Stable wide-complex tachycardia (with pulse)", route:"IV over 10 min", fixed:150, unit:"mg", c:50, cl:"50 mg/mL", rep:"May repeat once", note:"Dilute in 100 mL D5W. Then infuse 1 mg/min for 6 hr."},
+     {inf:true, ind:"Maintenance infusion", lo:0.5, hi:1, du:"mgmin", preset:"amio"}
+   ],
+   peds:[
+     {ind:"VF / pulseless VT", route:"IV/IO push", perKg:5, max:300, unit:"mg", c:50, cl:"50 mg/mL", rep:"May repeat to 3 doses total (max 15 mg/kg)"},
+     {ind:"SVT / VT with pulse", route:"IV over 20–60 min", perKg:5, max:300, unit:"mg", c:50, cl:"50 mg/mL", note:"Expert consultation recommended."}
+   ],
+   info:["Watch for: hypotension, bradycardia, QT prolongation.","Use a filter for infusions. Do not combine with procainamide without expert advice."]
+ },
+ { name:"Lidocaine", cls:"Antiarrhythmic",
+   conc:"20 mg/mL (2%) · 100 mg/5 mL prefilled",
+   adult:[
+     {ind:"VF / pulseless VT — 1st dose", route:"IV/IO push", perKg:[1,1.5], unit:"mg", c:20, cl:"20 mg/mL", needW:true},
+     {ind:"VF / pulseless VT — repeat", route:"IV/IO push", perKg:[0.5,0.75], unit:"mg", c:20, cl:"20 mg/mL", needW:true, rep:"Every 5–10 min, max 3 mg/kg total"},
+     {inf:true, ind:"Maintenance infusion (after ROSC)", lo:1, hi:4, du:"mgmin", preset:"lido"}
+   ],
+   peds:[
+     {ind:"VF / pulseless VT", route:"IV/IO push", perKg:1, max:100, unit:"mg", c:20, cl:"20 mg/mL"},
+     {inf:true, ind:"Maintenance infusion", lo:20, hi:50, du:"mcgkgmin", preset:"lido"}
+   ],
+   info:["Watch for: seizures, confusion, bradycardia, hypotension (toxicity)."]
+ },
+ { name:"Atropine", cls:"Anticholinergic",
+   conc:"0.1 mg/mL prefilled (1 mg/10 mL)",
+   adult:[
+     {ind:"Symptomatic bradycardia", route:"IV push", fixed:1, unit:"mg", c:0.1, cl:"0.1 mg/mL", rep:"Every 3–5 min, max 3 mg total", note:"Prepare pacing or epinephrine/dopamine drip if it doesn't work. Not effective in heart transplant patients."}
+   ],
+   peds:[
+     {ind:"Bradycardia (vagal / AV block)", route:"IV/IO", perKg:0.02, max:0.5, unit:"mg", c:0.1, cl:"0.1 mg/mL", rep:"May repeat once", note:"Epinephrine is first-line for pediatric bradycardia with poor perfusion."}
+   ],
+   info:["Not a drug for cardiac arrest (asystole/PEA) in current guidelines."]
+ },
+ { name:"Adenosine", cls:"Antiarrhythmic (AV nodal blocker)",
+   conc:"3 mg/mL (6 mg/2 mL vial)",
+   adult:[
+     {ind:"Stable narrow-complex SVT — 1st dose", route:"Rapid IV push", fixed:6, unit:"mg", c:3, cl:"3 mg/mL", note:"Use the closest port to the heart. Immediately flush with 20 mL NS. Run a rhythm strip."},
+     {ind:"SVT — 2nd dose", route:"Rapid IV push", fixed:12, unit:"mg", c:3, cl:"3 mg/mL", rep:"May give once if the 1st dose fails"}
+   ],
+   peds:[
+     {ind:"SVT — 1st dose", route:"Rapid IV/IO push", perKg:0.1, max:6, unit:"mg", c:3, cl:"3 mg/mL", note:"Two-syringe technique with rapid NS flush."},
+     {ind:"SVT — 2nd dose", route:"Rapid IV/IO push", perKg:0.2, max:12, unit:"mg", c:3, cl:"3 mg/mL"}
+   ],
+   info:["Warn the patient: brief chest discomfort, flushing and a short pause in rhythm are expected.","Use with caution in asthma."]
+ },
+ { name:"Dopamine", cls:"Vasopressor / inotrope",
+   conc:"Premixed 400 mg/250 mL (1,600 mcg/mL)",
+   adult:[
+     {inf:true, ind:"Bradycardia / hypotension infusion", lo:5, hi:20, du:"mcgkgmin", preset:"dopa"}
+   ],
+   peds:[
+     {inf:true, ind:"Shock / hypotension infusion", lo:2, hi:20, du:"mcgkgmin", preset:"dopa"}
+   ],
+   info:["Correct hypovolemia first. Give through a central line when possible; extravasation causes necrosis."]
+ },
+ { name:"Norepinephrine", cls:"Vasopressor",
+   conc:"Common mix 4 mg/250 mL (16 mcg/mL)",
+   adult:[
+     {inf:true, ind:"Post-ROSC hypotension infusion", lo:0.1, hi:0.5, du:"mcgkgmin", preset:"norepi"}
+   ],
+   peds:[
+     {inf:true, ind:"Fluid-refractory shock infusion", lo:0.1, hi:2, du:"mcgkgmin", preset:"norepi"}
+   ],
+   info:["Target MAP ≥ 65 mmHg in adults after ROSC (or per order)."]
+ },
+ { name:"Magnesium sulfate", cls:"Electrolyte",
+   conc:"50% = 500 mg/mL (0.5 g/mL)",
+   adult:[
+     {ind:"Torsades de pointes — cardiac arrest", route:"IV/IO push (diluted)", fixed:[1,2], unit:"g", c:0.5, cl:"0.5 g/mL", note:"Dilute in 10 mL D5W or NS."},
+     {ind:"Torsades with a pulse", route:"IV over 5–60 min", fixed:[1,2], unit:"g", c:0.5, cl:"0.5 g/mL", note:"Dilute in 50–100 mL."}
+   ],
+   peds:[
+     {ind:"Torsades / hypomagnesemia", route:"IV/IO", perKg:[0.025,0.05], max:2, unit:"g", c:0.5, cl:"0.5 g/mL", note:"= 25–50 mg/kg. Arrest: push. Pulse present: over 10–20 min."}
+   ],
+   info:["Watch for: hypotension, bradycardia, loss of reflexes, respiratory depression."]
+ },
+ { name:"Sodium bicarbonate", cls:"Alkalinizing agent",
+   conc:"8.4% = 1 mEq/mL (50 mEq/50 mL) · 4.2% = 0.5 mEq/mL for infants",
+   adult:[
+     {ind:"Hyperkalemia / TCA overdose / severe acidosis", route:"IV/IO slow push", perKg:1, unit:"mEq", c:1, cl:"8.4% (1 mEq/mL)", needW:true, note:"Not routine in cardiac arrest. Flush the line before and after; inactivates catecholamines and precipitates with calcium."}
+   ],
+   peds:[
+     {ind:"Hyperkalemia / TCA overdose / severe acidosis", route:"IV/IO slow push", perKg:1, max:50, unit:"mEq", c:1, cl:"8.4% (1 mEq/mL)", note:"Infants under 1 month: use 4.2% (0.5 mEq/mL) — double the mL shown."}
+   ],
+   info:["Make sure ventilation is adequate."]
+ },
+ { name:"Calcium chloride 10%", cls:"Electrolyte",
+   conc:"100 mg/mL (1 g/10 mL)",
+   adult:[
+     {ind:"Hyperkalemia / hypocalcemia / Ca-channel blocker OD", route:"Slow IV push", fixed:[500,1000], unit:"mg", c:100, cl:"100 mg/mL", note:"Central line preferred. May repeat as needed."}
+   ],
+   peds:[
+     {ind:"Hyperkalemia / hypocalcemia / Ca-channel blocker OD", route:"Slow IV/IO push", perKg:20, max:2000, unit:"mg", c:100, cl:"100 mg/mL", note:"= 0.2 mL/kg. Give slowly in arrest; over 10–20 min with a pulse."}
+   ],
+   info:["Severe tissue damage if it extravasates. Do not mix with sodium bicarbonate.","Calcium chloride has ~3× the elemental calcium of calcium gluconate."]
+ },
+ { name:"Calcium gluconate 10%", cls:"Electrolyte",
+   conc:"100 mg/mL (1 g/10 mL)",
+   adult:[
+     {ind:"Hyperkalemia / hypocalcemia", route:"IV over 2–5 min (arrest: push)", fixed:[1500,3000], unit:"mg", c:100, cl:"100 mg/mL", note:"= 15–30 mL. Safer for a peripheral line."}
+   ],
+   peds:[
+     {ind:"Hyperkalemia / hypocalcemia", route:"Slow IV/IO", perKg:60, max:3000, unit:"mg", c:100, cl:"100 mg/mL", note:"= 0.6 mL/kg."}
+   ],
+   info:["Do not mix with sodium bicarbonate."]
+ },
+ { name:"Dextrose", cls:"Glucose",
+   conc:"D50 = 0.5 g/mL · D25 = 0.25 g/mL · D10 = 0.1 g/mL",
+   adult:[
+     {ind:"Hypoglycemia", route:"IV push", fixed:25, unit:"g", c:0.5, cl:"D50 (0.5 g/mL)", note:"Recheck glucose in 15 min. D50 is irritating — use a large vein."},
+     {ind:"Hypoglycemia — D10 alternative", route:"IV", fixed:25, unit:"g", c:0.1, cl:"D10 (0.1 g/mL)", note:"Can be given in 100 mL boluses while rechecking glucose."}
+   ],
+   peds:[
+     {ind:"Hypoglycemia — D10 (infants / small children)", route:"IV/IO", perKg:[0.5,1], max:25, unit:"g", c:0.1, cl:"D10 (0.1 g/mL)", note:"= 5–10 mL/kg."},
+     {ind:"Hypoglycemia — D25 (older children)", route:"IV/IO", perKg:[0.5,1], max:25, unit:"g", c:0.25, cl:"D25 (0.25 g/mL)", note:"= 2–4 mL/kg."}
+   ],
+   info:["Avoid D50 in children. Check glucose in every arrest."]
+ },
+ { name:"Naloxone", cls:"Opioid antagonist",
+   conc:"0.4 mg/mL",
+   adult:[
+     {ind:"Opioid toxicity with respiratory depression", route:"IV / IM / IO", fixed:[0.4,2], unit:"mg", c:0.4, cl:"0.4 mg/mL", rep:"Every 2–3 min as needed", note:"Start low (0.04–0.4 mg IV) in opioid-dependent patients to avoid acute withdrawal. Ventilate first."}
+   ],
+   peds:[
+     {ind:"Opioid toxicity — full reversal", route:"IV / IM / IO", perKg:0.1, max:2, unit:"mg", c:0.4, cl:"0.4 mg/mL", rep:"Every 2–3 min as needed", note:"Children ≥ 5 years or > 20 kg: 2 mg."}
+   ],
+   info:["Its effect may wear off before the opioid's does — monitor for re-sedation."]
+ },
+ { name:"Diltiazem", cls:"Calcium-channel blocker",
+   conc:"5 mg/mL",
+   adult:[
+     {ind:"Stable narrow-complex tachycardia / rate control", route:"IV over 2 min", perKg:0.25, unit:"mg", c:5, cl:"5 mg/mL", needW:true, rep:"Second dose 0.35 mg/kg after 15 min if needed", note:"Usual dose 15–20 mg. Avoid in hypotension, heart failure or WPW."}
+   ],
+   peds:[], info:["Monitor BP closely."]
+ }
+];
+
+/* Infusion presets: mg of drug in mL of fluid */
+const PRESETS = {
+  epi:   {label:"Epinephrine 4 mg / 250 mL", mg:4, ml:250, du:"mcgkgmin"},
+  norepi:{label:"Norepinephrine 4 mg / 250 mL", mg:4, ml:250, du:"mcgkgmin"},
+  dopa:  {label:"Dopamine 400 mg / 250 mL", mg:400, ml:250, du:"mcgkgmin"},
+  amio:  {label:"Amiodarone 450 mg / 250 mL", mg:450, ml:250, du:"mgmin"},
+  lido:  {label:"Lidocaine 2 g / 500 mL", mg:2000, ml:500, du:"mgmin"},
+  custom:{label:"Custom concentration", mg:"", ml:"", du:"mcgkgmin"}
+};
+const DU_LABEL = {mcgkgmin:"mcg/kg/min", mcgmin:"mcg/min", mgmin:"mg/min", mghr:"mg/hr", mgkghr:"mg/kg/hr", unitsmin:"units/min"};
+
+/* ======================= STATE ======================= */
+const state = { pop:"adult", tab:"drugs", q:"", dir:"fwd" };
+const $ = s => document.querySelector(s);
+const store = {
+  get(k){ try{return localStorage.getItem(k)}catch(e){return null} },
+  set(k,v){ try{localStorage.setItem(k,v)}catch(e){} }
+};
+
+function weightKg(){
+  const v = parseFloat($("#weight").value);
+  if(!(v>0)) return null;
+  return $("#unit").value==="lb" ? v/2.2046 : v;
+}
+function fmt(n, unit){
+  if(n==null||!isFinite(n)) return "—";
+  let d = n>=100?0 : n>=10?1 : n>=1?2 : 3;
+  let s = (+n.toFixed(d)).toString();
+  return unit ? s+" "+unit : s;
+}
+function fmtMl(n){
+  if(!isFinite(n)) return "—";
+  const d = n<1 ? 2 : n<10 ? 1 : 0;
+  return (+n.toFixed(d))+" mL";
+}
+function rng(a,b,unit){ return Math.abs(a-b)<1e-9 ? fmt(a,unit) : fmt(a)+"–"+fmt(b,unit); }
+
+/* ======================= DRUGS TAB ======================= */
+function bolus(it, w){
+  const lohi = v => Array.isArray(v)?v:[v,v];
+  let lo, hi, math="", capped=false;
+  if(it.fixed!=null){
+    [lo,hi] = lohi(it.fixed);
+    if(it.perKg==null) math = "Fixed dose";
+  }
+  if(it.perKg!=null){
+    if(!w) return {need:true};
+    const [pl,ph] = lohi(it.perKg);
+    lo = pl*w; hi = ph*w;
+    math = `${rng(pl,ph,it.unit+"/kg")} × ${fmt(w)} kg = ${rng(lo,hi,it.unit)}`;
+    if(it.max!=null && hi>it.max){ capped=true; hi=it.max; if(lo>it.max) lo=it.max; math += ` → capped at max ${fmt(it.max,it.unit)}`; }
+  }
+  const vlo = lo/it.c, vhi = hi/it.c;
+  math += ` ÷ ${it.cl} = ${Math.abs(vlo-vhi)<1e-9?fmtMl(vlo):fmtMl(vlo).replace(" mL","")+"–"+fmtMl(vhi)}`;
+  return {lo,hi,vlo,vhi,math,capped};
+}
+
+function infusionBlock(it, w){
+  const p = PRESETS[it.preset];
+  const conc = p.mg/p.ml; // mg/mL
+  const rate = d => toRate(d, it.du, w, conc);
+  const needsW = it.du.includes("kg");
+  let res;
+  if(needsW && !w) res = `<div class="need">Enter weight to calculate mL/hr</div>`;
+  else{
+    const a = rate(it.lo), b = rate(it.hi);
+    res = `<div class="result"><span class="big">${fmt(a)}–${fmt(b)} mL/hr</span></div>
+      <div class="math">${rng(it.lo,it.hi,DU_LABEL[it.du])} using ${p.label} (${fmt(conc*1000)} mcg/mL)</div>`;
+  }
+  return `<div class="ind"><h3>${it.ind} <span class="route">· infusion ${rng(it.lo,it.hi,DU_LABEL[it.du])}</span></h3>${res}
+    <button type="button" class="tag rep" style="border:0;cursor:pointer" data-goto="${it.preset}" data-du="${it.du}" data-dose="${it.lo}">Open in drip calc →</button></div>`;
+}
+
+function renderDrugs(){
+  const w = weightKg();
+  const peds = state.pop==="peds";
+  $("#pedsWarn").classList.toggle("hidden", !(peds && !w));
+  const q = state.q.trim().toLowerCase();
+  const openSet = new Set([...document.querySelectorAll(".drug[open]")].map(d=>d.dataset.name));
+  let html = "";
+  for(const d of DRUGS){
+    const items = peds ? d.peds : d.adult;
+    if(!items || !items.length) continue;
+    const hay = (d.name+" "+d.cls+" "+items.map(i=>i.ind).join(" ")).toLowerCase();
+    if(q && !hay.includes(q)) continue;
+    let body = `<p class="conc">${d.conc}</p>`;
+    for(const it of items){
+      if(it.inf){ body += infusionBlock(it,w); continue; }
+      const r = bolus(it,w);
+      let res;
+      if(r.need) res = `<div class="need">Enter weight to calculate</div>`;
+      else res = `<div class="result"><span class="big">${rng(r.lo,r.hi,it.unit)}</span>
+          <span class="vol">${Math.abs(r.vlo-r.vhi)<1e-9?fmtMl(r.vlo):fmtMl(r.vlo).replace(" mL","")+"–"+fmtMl(r.vhi)}</span></div>
+          <div class="math">${r.math}</div>`;
+      const tags = (r.capped?`<span class="tag cap">MAX DOSE REACHED</span>`:"") + (it.rep?`<span class="tag rep">${it.rep}</span>`:"");
+      const alert = /Never|Not routine|Avoid/.test(it.note||"");
+      body += `<div class="ind"><h3>${it.ind} <span class="route">· ${it.route}</span></h3>${res}${tags?`<div>${tags}</div>`:""}
+        ${it.note?`<div class="note${alert?" alert":""}">${it.note}</div>`:""}</div>`;
+    }
+    if(d.info&&d.info.length) body += `<div class="inforow">${d.info.map(t=>`<p>${t}</p>`).join("")}</div>`;
+    const open = q || openSet.has(d.name) ? " open" : "";
+    html += `<details class="drug" data-name="${d.name}"${open}><summary><div><h2>${d.name}</h2><div class="cls">${d.cls}</div></div><span class="chev">›</span></summary><div class="body">${body}</div></details>`;
+  }
+  $("#drugList").innerHTML = html || `<div class="banner info">No medication matches “${state.q}”.</div>`;
+}
+
+/* ======================= SHOCKS TAB ======================= */
+function renderShock(){
+  const w = weightKg();
+  const peds = state.pop==="peds";
+  let h = "";
+  if(!peds){
+    h = `<div class="card"><h2>Defibrillation — VF / pulseless VT</h2><div class="joules">
+      <div class="jbox"><div class="lbl">Biphasic</div><div class="big">120–200 J</div><div class="math">Per manufacturer; if unknown use the maximum</div></div>
+      <div class="jbox"><div class="lbl">Monophasic</div><div class="big">360 J</div></div></div>
+      <p class="note">Resume CPR immediately for 2 min after each shock. Subsequent shocks: same or higher energy.</p></div>
+    <div class="card"><h2>Synchronized cardioversion (unstable, with pulse)</h2><div class="joules">
+      <div class="jbox"><div class="lbl">Narrow regular (SVT / flutter)</div><div class="big">50–100 J</div></div>
+      <div class="jbox"><div class="lbl">Narrow irregular (A-fib)</div><div class="big">120–200 J</div><div class="math">Biphasic</div></div>
+      <div class="jbox"><div class="lbl">Wide regular (VT with pulse)</div><div class="big">100 J</div></div>
+      <div class="jbox"><div class="lbl">Wide irregular / polymorphic</div><div class="big">Defib dose</div><div class="math">Unsynchronized</div></div></div>
+      <p class="note">Sedate if conscious. Press SYNC again before each shock — many devices reset it.</p></div>
+    <div class="card"><h2>Transcutaneous pacing</h2><p class="note">Rate 60–80 /min. Increase mA until electrical capture, then confirm a pulse (mechanical capture).</p></div>`;
+  } else if(!w){
+    h = `<div class="banner warn">Enter the child's weight to calculate joules.</div>`;
+  } else {
+    const cap = x => Math.min(x, 200);
+    h = `<div class="card"><h2>Defibrillation — VF / pulseless VT (${fmt(w)} kg)</h2><div class="joules">
+      <div class="jbox"><div class="lbl">1st shock · 2 J/kg</div><div class="big">${fmt(cap(2*w))} J</div></div>
+      <div class="jbox"><div class="lbl">2nd shock · 4 J/kg</div><div class="big">${fmt(cap(4*w))} J</div></div>
+      <div class="jbox"><div class="lbl">Later shocks · ≥4 J/kg</div><div class="big">${fmt(cap(4*w))}–${fmt(Math.min(10*w,200))} J</div><div class="math">Max 10 J/kg or adult dose</div></div></div>
+      <p class="note">Round to the nearest setting your defibrillator offers. Use pediatric pads under 25 kg if available.</p></div>
+    <div class="card"><h2>Synchronized cardioversion (${fmt(w)} kg)</h2><div class="joules">
+      <div class="jbox"><div class="lbl">1st · 0.5–1 J/kg</div><div class="big">${fmt(0.5*w)}–${fmt(cap(w))} J</div></div>
+      <div class="jbox"><div class="lbl">Next · 2 J/kg</div><div class="big">${fmt(cap(2*w))} J</div></div></div></div>`;
+  }
+  $("#shockOut").innerHTML = h;
+}
+
+/* ======================= DRIP TAB ======================= */
+function toRate(dose, du, w, concMgMl){
+  // returns mL/hr
+  let mgPerHr;
+  switch(du){
+    case "mcgkgmin": mgPerHr = dose*w*60/1000; break;
+    case "mcgmin":   mgPerHr = dose*60/1000; break;
+    case "mgmin":    mgPerHr = dose*60; break;
+    case "mghr":     mgPerHr = dose; break;
+    case "mgkghr":   mgPerHr = dose*w; break;
+    case "unitsmin": mgPerHr = dose*60; break; // concentration entered as units in "mg" field
+  }
+  return mgPerHr/concMgMl;
+}
+function fromRate(rate, du, w, concMgMl){
+  const mgPerHr = rate*concMgMl;
+  switch(du){
+    case "mcgkgmin": return mgPerHr*1000/60/w;
+    case "mcgmin":   return mgPerHr*1000/60;
+    case "mgmin":    return mgPerHr/60;
+    case "mghr":     return mgPerHr;
+    case "mgkghr":   return mgPerHr/w;
+    case "unitsmin": return mgPerHr/60;
+  }
+}
+function fillPresets(){
+  $("#dPreset").innerHTML = Object.entries(PRESETS).map(([k,p])=>`<option value="${k}">${p.label}</option>`).join("");
+}
+function applyPreset(k, du, dose){
+  const p = PRESETS[k];
+  $("#dPreset").value = k;
+  $("#dMg").value = p.mg; $("#dMl").value = p.ml;
+  $("#dUnit").value = du || p.du;
+  if(dose!=null) $("#dDose").value = dose;
+  renderDrip();
+}
+function renderDrip(){
+  const w = weightKg();
+  const mg = parseFloat($("#dMg").value), ml = parseFloat($("#dMl").value);
+  const du = $("#dUnit").value;
+  const needsW = du.includes("kg");
+  const out = $("#dripOut");
+  const isUnits = du==="unitsmin";
+  $("label[for=dMg]").textContent = isUnits ? "Drug in bag (units)" : "Drug in bag (mg)";
+  // range hint from drug data
+  let hint = "";
+  const k = $("#dPreset").value;
+  for(const d of DRUGS){ for(const it of (state.pop==="peds"?d.peds:d.adult)||[]){ if(it.inf && it.preset===k) hint += `${d.name} — ${it.ind}: ${rng(it.lo,it.hi,DU_LABEL[it.du])}. `; } }
+  $("#dripRange").textContent = hint ? "Usual range ("+(state.pop==="peds"?"pediatric":"adult")+"): "+hint : "";
+  if(!(mg>0 && ml>0)){ out.innerHTML = `<span class="need">Enter the amount of drug and bag volume.</span>`; return; }
+  if(needsW && !w){ out.innerHTML = `<span class="need">Enter the patient's weight at the top.</span>`; return; }
+  const conc = mg/ml;
+  const concTxt = isUnits ? `${fmt(conc)} units/mL` : `${fmt(conc)} mg/mL = ${fmt(conc*1000)} mcg/mL`;
+  if(state.dir==="fwd"){
+    const dose = parseFloat($("#dDose").value);
+    if(!(dose>0)){ out.innerHTML = `<span class="need">Enter the ordered dose.</span><div class="math">Concentration: ${concTxt}</div>`; return; }
+    const r = toRate(dose, du, w, conc);
+    out.innerHTML = `<div class="lbl" style="font-size:13px;font-weight:600">Set pump to</div><div class="big">${fmt(r)} mL/hr</div>
+      <div class="math">${fmt(dose)} ${DU_LABEL[du]}${needsW?` × ${fmt(w)} kg`:""} → concentration ${concTxt}</div>`;
+  } else {
+    const rate = parseFloat($("#dRate").value);
+    if(!(rate>0)){ out.innerHTML = `<span class="need">Enter the current pump rate.</span><div class="math">Concentration: ${concTxt}</div>`; return; }
+    const d = fromRate(rate, du, w, conc);
+    out.innerHTML = `<div class="lbl" style="font-size:13px;font-weight:600">Patient is receiving</div><div class="big">${fmt(d)} ${DU_LABEL[du]}</div>
+      <div class="math">${fmt(rate)} mL/hr × ${isUnits?fmt(conc)+" units/mL":fmt(conc*1000)+" mcg/mL"}${needsW?` ÷ ${fmt(w)} kg`:""}</div>`;
+  }
+}
+
+/* ======================= UI WIRING ======================= */
+function renderAll(){
+  const w = weightKg();
+  const unit = $("#unit").value;
+  let note = "";
+  if(w){
+    note = unit==="lb" ? `= <b>${fmt(w)} kg</b>` : `= ${fmt(w*2.2046)} lb`;
+    if(state.pop==="peds" && w>=40) note += " · At this weight, adult doses may apply";
+    if(state.pop==="adult" && w<30) note += " · Low weight — consider pediatric mode";
+  } else note = state.pop==="adult" ? "Weight optional — needed for weight-based drugs and drips" : "Weight required for pediatric doses";
+  $("#wtnote").innerHTML = note;
+  if(state.tab==="drugs") renderDrugs();
+  if(state.tab==="shock") renderShock();
+  if(state.tab==="drip") renderDrip();
+}
+function setPop(p){
+  state.pop = p;
+  $("#btnAdult").setAttribute("aria-pressed", p==="adult");
+  $("#btnPeds").setAttribute("aria-pressed", p==="peds");
+  renderAll();
+}
+function setTab(t){
+  state.tab = t;
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===t));
+  ["drugs","shock","drip"].forEach(x=>$("#tab-"+x).classList.toggle("hidden", x!==t));
+  renderAll();
+  window.scrollTo({top:0});
+}
+function setDir(d){
+  state.dir = d;
+  $("#dirFwd").setAttribute("aria-pressed", d==="fwd");
+  $("#dirRev").setAttribute("aria-pressed", d==="rev");
+  $("#doseWrap").classList.toggle("hidden", d!=="fwd");
+  $("#rateWrap").classList.toggle("hidden", d==="fwd");
+  renderDrip();
+}
+
+$("#btnAdult").onclick = ()=>setPop("adult");
+$("#btnPeds").onclick = ()=>setPop("peds");
+$("#weight").oninput = renderAll;
+$("#unit").onchange = ()=>{ store.set("ccc-unit",$("#unit").value); renderAll(); };
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+$("#q").oninput = e=>{ state.q = e.target.value; renderDrugs(); };
+$("#drugList").addEventListener("click", e=>{
+  const b = e.target.closest("[data-goto]"); if(!b) return;
+  setTab("drip"); setDir("fwd"); applyPreset(b.dataset.goto, b.dataset.du, b.dataset.dose);
+});
+$("#dPreset").onchange = e=>applyPreset(e.target.value);
+["#dMg","#dMl","#dDose","#dRate"].forEach(s=>$(s).oninput=renderDrip);
+$("#dUnit").onchange = renderDrip;
+$("#dirFwd").onclick = ()=>setDir("fwd");
+$("#dirRev").onclick = ()=>setDir("rev");
+
+// theme toggle
+(function(){
+  const saved = store.get("ccc-theme");
+  if(saved) document.documentElement.dataset.theme = saved;
+  $("#themeBtn").onclick = ()=>{
+    const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+    const next = cur==="dark"?"light":"dark";
+    document.documentElement.dataset.theme = next; store.set("ccc-theme",next);
+  };
+})();
+
+const savedUnit = store.get("ccc-unit"); if(savedUnit) $("#unit").value = savedUnit;
+$("#rev").textContent = REVIEWED;
+fillPresets(); applyPreset("epi");
+renderAll();
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); }); }
+</script>
+</body>
+</html>
